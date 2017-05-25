@@ -1,0 +1,65 @@
+Git Set Up / Installation Instructions for Windows
+
+Install Git from https://git-scm.com/downloads
+When being asked what kind of line ending default you want (Windows or UNIX), please choose NONE (i.e., take the files as they are in the repo). Shell scripts must remain in UNIX mode and they will run fine in Windows when using Cygwin's bash.exe or Git's bash.exe.
+Install to C:\applications\Git to avoid unnecessary scanning for every read/write
+Add the C:\applications\Git\bin directory to your PATH environment variable
+Git Bash Set Up
+Git Tools
+
+Sourcetree is a great application for viewing git projects on your computer. However, for more customization via command line, here are some helpful git scripts/config/tools that the team has put together.
+
+Custom Scripts
+
+Here are some useful custom scripts. Some the team has written, some are pulled from github. I created a ~/lib folder in my environment to put these in, and code samples below will reflect this. Just change ~/lib to wherever you want to put these files.
+prunelocal.py - Code that will run the prunelocal alias (see below).
+
+releaselog.py - Code that will run the releaselog alias (see below).
+
+git-completion.sh - Code that does autocomplete tab functionality for your git repository. This includes tab completion of branch names and tab completion for custom aliases such as prunelocal and softdelete.
+
+git-prompt.sh - Code that add extra options for customizing your bash shell prompt (PS1).
+
+Git Aliases
+
+The following aliases go in the ~/.gitconfig file. Some are designed specifically for a bash environment.
+[alias]
+today = log --since='7am' --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %n' --abbrev-commit
+thisweek = log --since='last monday' --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset %n' --abbrev-commit
+new = !sh -c 'git log $1@{1}..$1@{0} "$@"'
+pullactive = !git pull --rebase && B=$(git rev-parse --abbrev-ref HEAD) && git branch -r | sed -e 's/origin\\///g' | grep -v $B | grep -v "deleted/" | grep -v HEAD | xargs -L 1 -I %  sh -c "'{ git checkout %; git pull --rebase; }'" && git checkout $B
+graph-topo = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --all
+graph = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --all --date-order
+graphb = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --date-order
+diffnew = !sh -c 'git diff @{1}..'
+prunelocal = !python ~/lib/prunelocal.py
+softdelete = "!f(){ if [ $# -ne 2 ]; then echo \"Move a branch on a remote to /deleted/{branch}.\n\"; echo \"Usage     : git softdelete <remote> <branch name>\"; echo \"Example   : git softdelete origin feature/3.3/android-pull-to-refresh\"; exit 1; fi;  git push $1 $1/$2:refs/heads/deleted/$2 :$2; git branch -d $2; }; f"
+promote = !git push -u origin $(git rev-parse --abbrev-ref HEAD)
+releaselog = !python ~/lib/releaselog.py
+Description of these aliases
+
+git today - Shows all commits in the current branch from Today (since 7am)
+git thisweek - shows all new commits in the current branch from this week
+git new - shows all commits from the last time you pulled
+git pullactive - Will loop through all branches that are not in the delete/ folder on the remote. If we have a local tracking branch, it will update that branch with any changes on the remote if necessary. If we do not have a remote tracking branch locally, it will create one.
+git graph - Displays a graphical (ish) look at your history/log
+git graph-topo - Same as graph but with ancestor order instead of date order (I almost always prefer date order)
+git graphb - same as graph except only for the current branch
+git diffnew -like “new” but displays the diff instead of the commit messages
+git prunelocal - Removes all local branches that have the same name as a remote branch in the delete/ folder. When someone deletes a branch on the remote, it is not automatically picked up by all users who had a local branch tracking the remote branch. prunelocal aims to fix this.
+git softdelete origin - This will move the branch specified to delete/ and remove the local copy and the copy of on origin.
+git promote - Takes your local branch and pushes it to the remote (origin) while setting up your local branch to track against the new remote branch.
+git releaselog - Specify a release branch. This command prints all branches that are in that branch that were not in a previous release. Basically, this command gives you a list of features in the specified branch.
+Bash Customization
+
+Here are some helpful customization for bash with regards to the git integration. The following goes in your ~/.bash_profile file.
+source ~/lib/git-completion.sh
+source ~/lib/git-prompt.sh
+export PS1='\[\033[01;34m\] \w\[\033[31m\]$(__git_ps1 " (%s)")\[\033[37m\] $\[\033[00m\] '
+export GIT_PS1_SHOWUPSTREAM="auto"
+These will give you tab completion for git commands (including the custom git aliases like releaselog and softdelete. It will also change your command line PS1 to give you info about the git repository you cd into, such as branch name and upstream status.
+
+
+Matthew Weiler
+ITLP Consumer IT Developer
+Matthew.Weiler@53.com
